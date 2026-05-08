@@ -61,11 +61,11 @@ pipeline {
                         sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
 
                         env.INSTANCE_ID = sh(
-                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_instance_id | tr -d '\"'",
+                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_instance_id | grep -oP '[a-z0-9-]+'",
                             returnStdout: true
                         ).trim()
                         env.EC2_IP = sh(
-                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_public_ip | tr -d '\"'",
+                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_public_ip | grep -oP '[0-9.]+'",
                             returnStdout: true
                         ).trim()
 
