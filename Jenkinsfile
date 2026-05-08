@@ -24,7 +24,6 @@ pipeline {
                     url: env.GIT_REPO,
                     credentialsId: 'github-credentials'
                 script {
-                    // Safe: GIT_COMMIT is now populated after checkout
                     def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     env.BUILD_TAG = "${env.BUILD_NUMBER}-${shortCommit}"
                     echo "Build tag: ${env.BUILD_TAG}"
@@ -45,41 +44,41 @@ pipeline {
                 }
             }
             post {
-    always {
-        junit(
-               testResults: 'backend/target/surefire-reports/*.xml',
-               allowEmptyResults: true
-               )
-           }
-   }
-        }
-
-        stage('Terraform: Provision EC2') {
-    steps {
-        withAWS(region: env.AWS_REGION) {
-            script {
-                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
-                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
-
-                env.INSTANCE_ID = sh(
-                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_instance_id 2>/dev/null",
-                    returnStdout: true
-                ).trim()
-                env.EC2_IP = sh(
-                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_public_ip 2>/dev/null",
-                    returnStdout: true
-                ).trim()
-
-                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                echo "EC2 Public IP   : ${env.EC2_IP}"
-
-                if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
-                    error("INSTANCE_ID is empty — terraform output failed")
+                always {
+                    junit(
+                        testResults: 'backend/target/surefire-reports/*.xml',
+                        allowEmptyResults: true
+                    )
                 }
             }
         }
-    }
-}
+
+        stage('Terraform: Provision EC2') {
+            steps {
+                withAWS(region: env.AWS_REGION) {
+                    script {
+                        sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
+                        sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
+
+                        env.INSTANCE_ID = sh(
+                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_instance_id | tr -d '\"'",
+                            returnStdout: true
+                        ).trim()
+                        env.EC2_IP = sh(
+                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_public_ip | tr -d '\"'",
+                            returnStdout: true
+                        ).trim()
+
+                        echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                        echo "EC2 Public IP   : ${env.EC2_IP}"
+
+                        if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
+                            error("INSTANCE_ID is empty — terraform output failed")
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Wait for SSM') {
             steps {
@@ -109,10 +108,8 @@ pipeline {
             when { branch 'main' }
             steps {
                 withAWS(region: env.AWS_REGION) {
-                    // Single Secret file credential — the entire .env stored in Jenkins
                     withCredentials([file(credentialsId: 'lm-hospital-env', variable: 'ENV_FILE')]) {
                         script {
-                            // Step 1: Base64-encode the .env file and send it to EC2 via SSM
                             def envB64 = sh(
                                 script: "base64 -w 0 '${ENV_FILE}'",
                                 returnStdout: true
@@ -140,7 +137,6 @@ pipeline {
                                 returnStdout: true
                             ).trim()
 
-                            // Wait for .env write to complete
                             timeout(time: 3, unit: 'MINUTES') {
                                 waitUntil(initialRecurrencePeriod: 10000) {
                                     def s = sh(
@@ -158,7 +154,6 @@ pipeline {
                             }
                             echo "Secrets written to EC2 successfully."
 
-                            // Step 2: Clone repo and run native deploy script
                             def deployCommands = [
                                 "if [ -d '/opt/lm-hospital/.git' ]; then cd /opt/lm-hospital && git fetch origin && git reset --hard origin/main && git clean -fd; else git clone '${env.GIT_REPO}' /opt/lm-hospital; fi",
                                 "chmod +x /opt/lm-hospital/devops/deploy.sh",
@@ -264,8 +259,6 @@ pipeline {
             echo "Pipeline failed — check logs above."
         }
         always {
-            // Wrapped in node block to ensure workspace context is available
-            // even if the pipeline failed before any node was allocated
             node('') {
                 cleanWs(patterns: [
                     [pattern: 'devops/terraform/terraform.tfstate',        type: 'EXCLUDE'],
