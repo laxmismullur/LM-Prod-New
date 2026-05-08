@@ -199,7 +199,7 @@ pipeline {
                             echo "Secrets written to EC2 successfully."
 
                             def deployCommands = [
-                                "if [ -d '/opt/lm-hospital/.git' ]; then cd /opt/lm-hospital && git fetch origin && git reset --hard origin/main && git clean -fd; else git clone '${env.GIT_REPO}' /opt/lm-hospital; fi",
+                                "if [ -d '/opt/lm-hospital/.git' ]; then cd /opt/lm-hospital && git fetch origin && git reset --hard origin/main && git clean -fd; else rm -rf /opt/lm-hospital && git clone '${env.GIT_REPO}' /opt/lm-hospital; fi",
                                 "chmod +x /opt/lm-hospital/devops/deploy.sh",
                                 "GIT_REPO_URL='${env.GIT_REPO}' bash /opt/lm-hospital/devops/deploy.sh"
                             ]
