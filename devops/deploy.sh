@@ -4,6 +4,10 @@
 # Pre-requisites: bootstrap.tpl already executed
 set -euo pipefail
 
+# Fix git safe directory — SSM runs as root, repo may be owned by ubuntu
+git config --global --add safe.directory /home/ubuntu/lm-hospital
+git config --global --add safe.directory '*'
+
 APP_DIR=/home/ubuntu/lm-hospital
 FRONTEND_DIST=/var/www/lm-hospital
 LOG_FILE=/var/log/lm-hospital/deploy.log

@@ -184,10 +184,10 @@ pipeline {
 
                             echo "Secrets written to EC2 successfully."
 
+                            // Clone as root, chown to ubuntu, restore .env, then deploy
                             def deployCommands = [
-                                "if [ -d /home/ubuntu/lm-hospital/.git ]; then cd /home/ubuntu/lm-hospital && sudo -u ubuntu git fetch origin && sudo -u ubuntu git reset --hard origin/main && sudo -u ubuntu git clean -fd; else rm -rf /home/ubuntu/lm-hospital && sudo -u ubuntu git clone ${env.GIT_REPO} /home/ubuntu/lm-hospital; fi",
+                                "rm -rf /home/ubuntu/lm-hospital && git clone ${env.GIT_REPO} /home/ubuntu/lm-hospital",
                                 "chown -R ubuntu:ubuntu /home/ubuntu/lm-hospital",
-                                "cp /home/ubuntu/lm-hospital/.env /home/ubuntu/lm-hospital/.env.bak 2>/dev/null || true",
                                 "echo '${envB64}' | base64 -d > /home/ubuntu/lm-hospital/.env",
                                 "chmod 600 /home/ubuntu/lm-hospital/.env && chown ubuntu:ubuntu /home/ubuntu/lm-hospital/.env",
                                 "chmod +x /home/ubuntu/lm-hospital/devops/deploy.sh",
