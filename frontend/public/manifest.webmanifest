@@ -1,0 +1,26 @@
+{
+  "name": "LM Hospital Management System",
+  "short_name": "LM Hospital",
+  "description": "Hospital management app for patients, doctors, nurses, receptionists, and admins.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f766e",
+  "categories": ["medical", "health", "productivity"],
+  "icons": [
+    {
+      "src": "/lm-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/lm-maskable-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

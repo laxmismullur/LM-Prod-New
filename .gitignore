@@ -1,0 +1,33 @@
+# ── Secrets — NEVER commit ───────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Java / Maven ─────────────────────────────────────────────
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# ── Node / npm ────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.mobile
+
+# ── Terraform state & secrets ────────────────────────────────
+devops/terraform/.terraform/
+devops/terraform/*.tfstate
+devops/terraform/*.tfstate.backup
+devops/terraform/*.tfvars
+devops/terraform/tfplan
+devops/terraform/.terraform.lock.hcl
+
+# ── OS & IDE ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/

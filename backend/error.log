@@ -1,0 +1,77 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< com.lm:LMHospital >--------------------------
+[INFO] Building LMHospital 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.0:run (default-cli) > test-compile @ LMHospital >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ LMHospital ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ LMHospital ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ LMHospital ---
+[INFO] skip non existing resourceDirectory C:\Users\Dell\Desktop\Laxmi Project\LMHospital_v2\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ LMHospital ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:3.2.0:run (default-cli) < test-compile @ LMHospital <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.0:run (default-cli) @ LMHospital ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.0)
+
+2026-04-08T14:55:12.022+05:30  INFO 12980 --- [           main] com.lm.hospital.LMHospitalApplication    : Starting LMHospitalApplication using Java 21.0.1 with PID 12980 (C:\Users\Dell\Desktop\Laxmi Project\LMHospital_v2\backend\target\classes started by Dell in C:\Users\Dell\Desktop\Laxmi Project\LMHospital_v2\backend)
+2026-04-08T14:55:12.026+05:30 DEBUG 12980 --- [           main] com.lm.hospital.LMHospitalApplication    : Running with Spring Boot v3.2.0, Spring v6.1.1
+2026-04-08T14:55:12.028+05:30  INFO 12980 --- [           main] com.lm.hospital.LMHospitalApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-04-08T14:55:14.010+05:30  INFO 12980 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-08T14:55:14.113+05:30  INFO 12980 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 91 ms. Found 6 JPA repository interfaces.
+2026-04-08T14:55:15.691+05:30  INFO 12980 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8085 (http)
+2026-04-08T14:55:15.705+05:30  INFO 12980 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-08T14:55:15.706+05:30  INFO 12980 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-08T14:55:15.803+05:30  INFO 12980 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-08T14:55:15.805+05:30  INFO 12980 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3606 ms
+2026-04-08T14:55:16.338+05:30  INFO 12980 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-08T14:55:16.412+05:30  INFO 12980 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-08T14:55:16.458+05:30  INFO 12980 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-08T14:55:16.814+05:30  INFO 12980 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-08T14:55:16.851+05:30  INFO 12980 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-08T14:55:17.077+05:30  INFO 12980 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4e26564d
+2026-04-08T14:55:17.080+05:30  INFO 12980 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-08T14:55:17.149+05:30  WARN 12980 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-08T14:55:18.621+05:30  INFO 12980 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-08T14:55:18.703+05:30  INFO 12980 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-08T14:55:19.379+05:30 DEBUG 12980 --- [           main] c.l.hospital.security.LMAuthTokenFilter  : Filter 'LMAuthTokenFilter' configured for use
+2026-04-08T14:55:19.980+05:30  INFO 12980 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-08T14:55:20.661+05:30  WARN 12980 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-04-08T14:55:21.506+05:30  INFO 12980 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoint(s) beneath base path '/actuator'
+2026-04-08T14:55:21.648+05:30  INFO 12980 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@62048ab, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@173039b5, org.springframework.security.web.context.SecurityContextHolderFilter@4be8c1bb, org.springframework.security.web.header.HeaderWriterFilter@36dab184, org.springframework.web.filter.CorsFilter@6005cfe5, org.springframework.security.web.authentication.logout.LogoutFilter@6701fbf3, com.lm.hospital.security.LMAuthTokenFilter@525c0f74, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3d980928, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@5f97d43e, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@37635407, org.springframework.security.web.session.SessionManagementFilter@30587737, org.springframework.security.web.access.ExceptionTranslationFilter@3af1b643, org.springframework.security.web.access.intercept.AuthorizationFilter@5080c40e]
+2026-04-08T14:55:22.498+05:30  INFO 12980 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8085 (http) with context path ''
+2026-04-08T14:55:22.513+05:30  INFO 12980 --- [           main] com.lm.hospital.LMHospitalApplication    : Started LMHospitalApplication in 11.28 seconds (process running for 12.005)
+Hibernate: 
+    select
+        count(*) 
+    from
+        lm_users l1_0
+2026-04-08T14:56:00.039+05:30  INFO 12980 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-08T14:56:00.042+05:30  INFO 12980 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-04-08T14:56:00.059+05:30  INFO 12980 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  55.522 s
+[INFO] Finished at: 2026-04-08T14:56:00+05:30
+[INFO] ------------------------------------------------------------------------

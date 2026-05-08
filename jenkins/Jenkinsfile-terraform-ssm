@@ -1,0 +1,80 @@
+pipeline {
+  agent any
+
+  environment {
+    AWS_REGION            = 'us-east-1'
+    AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
+    AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+    TF_VAR_app_name       = 'lm-hospital'
+    TF_VAR_key_pair_name  = 'LM-Hospital-Prod'
+    TF_VAR_instance_type  = 'm7i-flex.large'
+    GIT_REPO_URL          = 'https://github.com/your-org/lm-hospital.git'
+  }
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+    timeout(time: 30, unit: 'MINUTES')
+    disableConcurrentBuilds()
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Terraform Init') {
+      steps {
+        dir('devops/terraform') {
+          sh 'terraform init'
+        }
+      }
+    }
+
+    stage('Terraform Plan') {
+      steps {
+        dir('devops/terraform') {
+          sh 'terraform plan -out=tfplan'
+        }
+      }
+    }
+
+    stage('Terraform Apply') {
+      steps {
+        dir('devops/terraform') {
+          sh 'terraform apply -auto-approve tfplan'
+        }
+      }
+    }
+
+    stage('Deploy via SSM') {
+      steps {
+        dir('devops/terraform') {
+          script {
+            env.INSTANCE_ID = sh(returnStdout: true, script: 'terraform output -raw ec2_instance_id').trim()
+          }
+          sh '''
+            echo "==> Sending deploy command to instance ${INSTANCE_ID}"
+            aws ssm send-command \
+              --instance-ids "${INSTANCE_ID}" \
+              --document-name "AWS-RunShellScript" \
+              --comment "LMHospital full deploy via SSM" \
+              --parameters commands=["cd /opt/lm-hospital && rm -rf * && git clone ${GIT_REPO_URL} . && cd backend && mvn clean package -DskipTests && cd ../frontend && npm ci && npm run build && cd .. && docker-compose up -d --build"] \
+              --region ${AWS_REGION}
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo 'Pipeline completed successfully.'
+    }
+    failure {
+      echo 'Pipeline failed. Check the logs and permissions.'
+    }
+  }
+}
+
