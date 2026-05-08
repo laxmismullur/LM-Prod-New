@@ -101,7 +101,11 @@ public class LMSecurityConfig {
                 .requestMatchers(
                         "/api/auth/**",
                         "/api/lm/auth/**",
-                        "/h2-console/**"
+                        "/h2-console/**",
+                        "/actuator/health",
+                        "/actuator/prometheus",
+                        "/actuator/info",
+                        "/actuator/metrics"
                 ).permitAll()
 
                 // 🔒 STAFF MODULE (SECURE - FIXED)
