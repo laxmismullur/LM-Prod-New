@@ -53,30 +53,39 @@ pipeline {
         }
 
         stage('Terraform: Provision EC2') {
-            steps {
-                withAWS(region: env.AWS_REGION) {
-                    script {
-                        sh """
-                            cd ${env.WORKSPACE}/devops/terraform
-                            terraform init
-                            terraform apply -auto-approve
-                            terraform output -raw ec2_instance_id > /tmp/instance_id.txt
-                            terraform output -raw ec2_public_ip   > /tmp/ec2_ip.txt
-                        """
+    steps {
+        withAWS(region: env.AWS_REGION) {
+            script {
+                def outputs = sh(
+                    script: """
+                        cd ${env.WORKSPACE}/devops/terraform
+                        terraform init
+                        terraform apply -auto-approve
+                        echo "INSTANCE_ID=\$(terraform output -raw ec2_instance_id)"
+                        echo "EC2_IP=\$(terraform output -raw ec2_public_ip)"
+                    """,
+                    returnStdout: true
+                ).trim()
 
-                        env.INSTANCE_ID = sh(script: 'cat /tmp/instance_id.txt', returnStdout: true).trim()
-                        env.EC2_IP      = sh(script: 'cat /tmp/ec2_ip.txt',      returnStdout: true).trim()
-
-                        echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                        echo "EC2 Public IP   : ${env.EC2_IP}"
-
-                        if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
-                            error("INSTANCE_ID is empty — terraform output failed")
-                        }
+                outputs.split('\n').each { line ->
+                    if (line.startsWith('INSTANCE_ID=')) {
+                        env.INSTANCE_ID = line.replace('INSTANCE_ID=', '').trim()
                     }
+                    if (line.startsWith('EC2_IP=')) {
+                        env.EC2_IP = line.replace('EC2_IP=', '').trim()
+                    }
+                }
+
+                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                echo "EC2 Public IP   : ${env.EC2_IP}"
+
+                if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
+                    error("INSTANCE_ID is empty — terraform output failed")
                 }
             }
         }
+    }
+}
 
         stage('Wait for SSM') {
             steps {
