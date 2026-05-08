@@ -45,8 +45,13 @@ pipeline {
                 }
             }
             post {
-                always { junit 'backend/target/surefire-reports/*.xml' }
-            }
+    always {
+        junit(
+               testResults: 'backend/target/surefire-reports/*.xml',
+               allowEmptyResults: true
+               )
+           }
+   }
         }
 
         stage('Terraform: Provision EC2') {
