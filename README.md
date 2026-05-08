@@ -1,5 +1,5 @@
 # LM Hospital Management System
-### Spring Boot · React · MySQL · Docker · Jenkins · Terraform · Prometheus · Grafana
+### Spring Boot · React · MySQL · Jenkins · Terraform · Prometheus · Grafana
 
 Full-stack hospital management web application with DevOps integration.  
 All source files prefixed with `LM` as per requirement.
@@ -22,11 +22,13 @@ All source files prefixed with `LM` as per requirement.
 **Backend:** Java 21 · Spring Boot 3.2 · Spring Security · JWT · Spring Data JPA · MySQL  
 **Frontend:** React 18 · Vite · React Router v6 · Axios · Lucide Icons  
 **Database:** MySQL 8.0  
-**DevOps:** Docker · Docker Compose · Jenkins CI/CD · Terraform (AWS EC2) · Prometheus · Grafana
+**DevOps:** Jenkins CI/CD · Terraform (AWS EC2) · Prometheus · Grafana
 
 ---
 
 ## Quick Start (Local Dev)
+
+This project supports native local development without Docker.
 
 ### Prerequisites
 - Java 21, Maven 3.9+
@@ -42,50 +44,25 @@ GRANT ALL ON lm_hospital_db.* TO 'lmuser'@'localhost';
 
 ### 2. Backend
 ```bash
-cd LMHospital/backend
+cd backend
 # Set env vars or edit application.properties
 export DB_USERNAME=lmuser
 export DB_PASSWORD=lmpassword
 mvn spring-boot:run
-# → http://localhost:8080
+# → http://localhost:8085
 ```
 
 ### 3. Frontend
 ```bash
-cd LMHospital/frontend
+cd frontend
 npm install
 npm run dev
 # → http://localhost:5173
 ```
 
----
-
-## Docker Compose (Recommended)
-
-Runs the full stack: App + MySQL + Prometheus + Grafana.
-
-```bash
-cd LMHospital
-
-# Create .env file
-cat > .env << EOF2
-DB_USERNAME=lmuser
-DB_PASSWORD=lmpassword
-DB_ROOT_PASSWORD=LMHospital@2024
-JWT_SECRET=lmHospitalSecretKey2024SuperSecureKeyForJWTTokenGeneration
-GRAFANA_USER=lmadmin
-GRAFANA_PASSWORD=lmgrafana
-EOF2
-
-docker-compose up -d
-```
-
-| Service | URL |
-|---|---|
-| Frontend (React) | http://localhost |
-| Backend API | http://localhost:8080 |
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3001 |
+### 4. Access
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8085/api/lm
 
 ---
 
@@ -106,11 +83,11 @@ docker-compose up -d
 
 1. Create a Pipeline job in Jenkins
 2. Point it to `devops/jenkins/Jenkinsfile`
-3. Add credentials: `docker-hub-credentials`, `ec2-ssh-key`, `ec2-host`, `db-password`, `jwt-secret`
+3. Add credentials: `ec2-ssh-key`, `ec2-host`, `db-password`, `jwt-secret`
 
 **Pipeline stages:**
 ```
-Checkout → Build Backend → Build Frontend → Docker Build → Docker Push → Deploy EC2 → Health Check
+Checkout → Build Backend → Build Frontend → Deploy EC2 → Health Check
 ```
 
 ### Infrastructure — Terraform (AWS EC2)
@@ -167,7 +144,6 @@ Add Prometheus data source: `http://lm-prometheus:9090`
 ```
 LMHospital/
 ├── backend/               # Spring Boot
-│   ├── Dockerfile
 │   ├── pom.xml            # MySQL + Actuator + Micrometer
 │   └── src/main/java/com/lm/hospital/
 │       ├── config/        LMSecurityConfig, LMDataInitializer
@@ -177,7 +153,6 @@ LMHospital/
 │       ├── security/      LMJwtUtils, LMAuthTokenFilter, LMUserDetailsService
 │       └── dto/           LMLoginRequest, LMJwtResponse, LMDashboardStats
 ├── frontend/              # React + Vite
-│   ├── Dockerfile
 │   ├── nginx.conf
 │   └── src/
 │       ├── pages/         LMLoginPage, LMDashboard, LMDoctors, LMPatients, LMAppointments, LMMedicalRecords
@@ -189,7 +164,6 @@ LMHospital/
 │   ├── prometheus/        prometheus.yml
 │   └── terraform/         main.tf (AWS EC2)
 ├── db/                    init.sql
-├── docker-compose.yml
 └── README.md
 ```
  & "C:\Program Files\MySQL\MySQL Server 9.6\bin\mysql.exe" -u root -p
