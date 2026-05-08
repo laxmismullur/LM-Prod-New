@@ -116,6 +116,8 @@ pipeline {
                                 return status == 'Online'
                             }
                         }
+                        echo "SSM Online — waiting 300s for bootstrap to complete..."
+                        sleep(300)
                     }
                 }
             }
