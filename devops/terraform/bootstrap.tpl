@@ -8,6 +8,15 @@ LOG=/var/log/lm-bootstrap.log
 exec > >(tee -a "$LOG") 2>&1
 echo "=== LM Hospital Bootstrap: $(date) ==="
 
+# ── SSM Agent — start FIRST so Jenkins can connect immediately ─
+# Canonical Ubuntu 22.04 AMIs do not pre-install the SSM agent.
+# Install and start it before any long-running steps so the
+# 'Wait for SSM' stage in Jenkins passes within its timeout window.
+apt-get update -y
+apt-get install -y amazon-ssm-agent
+systemctl enable --now amazon-ssm-agent
+echo "SSM agent started: $(systemctl is-active amazon-ssm-agent)"
+
 # ── System update & base packages ────────────────────────────
 apt-get update -y && apt-get upgrade -y
 apt-get install -y \
@@ -67,10 +76,6 @@ sed -i 's/^;http_port = 3000/http_port = 3001/' /etc/grafana/grafana.ini
 grep -q "^http_port" /etc/grafana/grafana.ini || \
     sed -i '/^\[server\]/a http_port = 3001' /etc/grafana/grafana.ini
 systemctl enable grafana-server
-
-# ── AWS SSM Agent ─────────────────────────────────────────────
-systemctl enable --now amazon-ssm-agent 2>/dev/null || \
-    snap start amazon-ssm-agent 2>/dev/null || true
 
 # ── Systemd: Node Exporter ────────────────────────────────────
 cat > /etc/systemd/system/node_exporter.service <<'SVCEOF'
