@@ -55,26 +55,30 @@ pipeline {
         }
 
         stage('Terraform: Provision EC2') {
-            steps {
-                withAWS(region: env.AWS_REGION) {
-                    dir('devops/terraform') {
-                        sh 'terraform init && terraform apply -auto-approve'
-                        script {
-                            env.INSTANCE_ID = sh(
-                                script: 'terraform output -raw ec2_instance_id',
-                                returnStdout: true
-                            ).trim()
-                            env.EC2_IP = sh(
-                                script: 'terraform output -raw ec2_public_ip',
-                                returnStdout: true
-                            ).trim()
-                            echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                            echo "EC2 Public IP   : ${env.EC2_IP}"
-                        }
-                    }
+    steps {
+        withAWS(region: env.AWS_REGION) {
+            script {
+                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
+                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
+                
+                env.INSTANCE_ID = sh(
+                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_instance_id",
+                    returnStdout: true
+                ).trim()
+                env.EC2_IP = sh(
+                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_public_ip",
+                    returnStdout: true
+                ).trim()
+
+                if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
+                    error("INSTANCE_ID is empty — terraform output failed")
                 }
+                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                echo "EC2 Public IP   : ${env.EC2_IP}"
             }
         }
+    }
+}
 
         stage('Wait for SSM') {
             steps {
