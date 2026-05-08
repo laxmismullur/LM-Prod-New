@@ -23,7 +23,7 @@ public class LMDoctor {
     private String doctorCode;
 
     @NotBlank(message = "Doctor name is required")
-    @Pattern(regexp = "^Dr\\.[A-Za-z][A-Za-z\\s.'-]{1,}$", message = "Doctor name must be in this format: Dr.Laxmi")
+    @Pattern(regexp = "^Dr\\.\\s?[A-Za-z][A-Za-z\\s.'-]{1,}$", message = "Doctor name must be in this format: Dr. Laxmi or Dr.Laxmi")
     @Column(nullable = false)
     private String fullName;
 
@@ -33,7 +33,7 @@ public class LMDoctor {
 
     private String department;
     @NotBlank(message = "Doctor qualification is required")
-    @Pattern(regexp = "^MBBS$", message = "Doctor qualification must be MBBS")
+    @Pattern(regexp = "^[A-Za-z,\\s.]+$", message = "Enter a valid qualification (e.g. MBBS, MD, MS Orthopedics)")
     private String qualification;
     @Pattern(regexp = "^(?:\\+91[-\\s]?)?[6-9]\\d{9}$", message = "Use a valid Indian phone number")
     private String phone;
