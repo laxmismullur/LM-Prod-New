@@ -7,7 +7,7 @@ set -euo pipefail
 APP_DIR=/opt/lm-hospital
 FRONTEND_DIST=/var/www/lm-hospital
 LOG_FILE=/var/log/lm-hospital/deploy.log
-GIT_REPO="${GIT_REPO_URL:-https://github.com/your-org/lm-hospital.git}"
+GIT_REPO="${GIT_REPO_URL:-https://github.com/laxmismullur/LM-Hospital-Production.git}"
 
 mkdir -p /var/log/lm-hospital
 exec > >(tee -a "$LOG_FILE") 2>&1

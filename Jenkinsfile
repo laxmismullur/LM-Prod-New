@@ -137,8 +137,6 @@ pipeline {
         }
 
         stage('Deploy via SSM') {
-            when { branch 'main' }
-
             steps {
                 withAWS(region: env.AWS_REGION) {
 
@@ -228,8 +226,6 @@ pipeline {
         }
 
         stage('Verify Deployment') {
-            when { branch 'main' }
-
             steps {
                 withAWS(region: env.AWS_REGION) {
 
@@ -284,8 +280,6 @@ pipeline {
         }
 
         stage('Health Check') {
-            when { branch 'main' }
-
             steps {
 
                 sh """
