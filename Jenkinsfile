@@ -3,6 +3,7 @@ def EC2_IP = ""
 def CMD_ID = ""
 
 pipeline {
+
     agent any
 
     environment {
@@ -20,12 +21,15 @@ pipeline {
     stages {
 
         stage('Checkout') {
+
             steps {
+
                 git branch: 'main',
                     url: env.GIT_REPO,
                     credentialsId: 'github-credentials'
 
                 script {
+
                     def shortCommit = sh(
                         script: 'git rev-parse --short HEAD',
                         returnStdout: true
@@ -39,8 +43,11 @@ pipeline {
         }
 
         stage('Backend: Test') {
+
             steps {
+
                 dir('backend') {
+
                     sh '''
                         mvn clean test \
                             -Dspring.datasource.url=jdbc:h2:mem:testdb \
@@ -52,7 +59,9 @@ pipeline {
             }
 
             post {
+
                 always {
+
                     junit(
                         testResults: 'backend/target/surefire-reports/*.xml',
                         allowEmptyResults: true
@@ -62,24 +71,31 @@ pipeline {
         }
 
         stage('Terraform: Provision EC2') {
+
             steps {
+
                 withAWS(region: env.AWS_REGION) {
+
                     script {
 
                         sh """
                             cd ${env.WORKSPACE}/devops/terraform
+
                             terraform init -no-color
+
                             terraform apply -auto-approve -no-color
                         """
 
                         sh """
                             cd ${env.WORKSPACE}/devops/terraform
+
                             terraform output
                         """
 
                         INSTANCE_ID = sh(
                             script: """
                                 cd ${env.WORKSPACE}/devops/terraform
+
                                 terraform output -raw ec2_instance_id
                             """,
                             returnStdout: true
@@ -88,6 +104,7 @@ pipeline {
                         EC2_IP = sh(
                             script: """
                                 cd ${env.WORKSPACE}/devops/terraform
+
                                 terraform output -raw ec2_public_ip
                             """,
                             returnStdout: true
@@ -108,8 +125,11 @@ pipeline {
         }
 
         stage('Wait for SSM') {
+
             steps {
+
                 withAWS(region: env.AWS_REGION) {
+
                     script {
 
                         timeout(time: 10, unit: 'MINUTES') {
@@ -137,7 +157,9 @@ pipeline {
         }
 
         stage('Deploy via SSM') {
+
             steps {
+
                 withAWS(region: env.AWS_REGION) {
 
                     withCredentials([
@@ -147,15 +169,23 @@ pipeline {
                         script {
 
                             def envB64 = sh(
-                                script: "base64 -w 0 '${ENV_FILE}'",
+                                script: '''
+                                    base64 -w 0 "$ENV_FILE"
+                                ''',
                                 returnStdout: true
                             ).trim()
 
                             def writeEnvCmd = [
-                                "mkdir -p /opt/lm-hospital /var/log/lm-hospital",
-                                "chown ubuntu:ubuntu /opt/lm-hospital /var/log/lm-hospital",
+                                "mkdir -p /opt/lm-hospital",
+                                "mkdir -p /var/log/lm-hospital",
+
+                                "chown ubuntu:ubuntu /opt/lm-hospital",
+                                "chown ubuntu:ubuntu /var/log/lm-hospital",
+
                                 "echo '${envB64}' | base64 -d > /opt/lm-hospital/.env",
+
                                 "chmod 600 /opt/lm-hospital/.env",
+
                                 "chown ubuntu:ubuntu /opt/lm-hospital/.env"
                             ]
 
@@ -188,8 +218,19 @@ pipeline {
                                         returnStdout: true
                                     ).trim()
 
+                                    echo "ENV upload status: ${s}"
+
                                     if (s == 'Failed') {
-                                        error("Writing .env failed — check SSM command ${envCmdId}")
+
+                                        sh """
+                                            aws ssm get-command-invocation \
+                                              --command-id '${envCmdId}' \
+                                              --instance-id '${INSTANCE_ID}' \
+                                              --query 'StandardErrorContent' \
+                                              --output text
+                                        """
+
+                                        error("Writing .env failed")
                                     }
 
                                     return s == 'Success'
@@ -199,9 +240,27 @@ pipeline {
                             echo "Secrets written to EC2 successfully."
 
                             def deployCommands = [
-                                "if [ -d '/opt/lm-hospital/.git' ]; then cd /opt/lm-hospital && git fetch origin && git reset --hard origin/main && git clean -fd; else rm -rf /opt/lm-hospital && git clone '${env.GIT_REPO}' /opt/lm-hospital; fi",
+
+                                "mkdir -p /opt/lm-hospital",
+
+                                """
+                                if [ ! -d '/opt/lm-hospital/.git' ]; then
+                                    git clone '${env.GIT_REPO}' /opt/lm-hospital
+                                else
+                                    cd /opt/lm-hospital
+                                    git fetch origin
+                                    git reset --hard origin/main
+                                    git clean -fd
+                                fi
+                                """,
+
+                                "ls -la /opt/lm-hospital",
+
+                                "ls -la /opt/lm-hospital/.env",
+
                                 "chmod +x /opt/lm-hospital/devops/deploy.sh",
-                                "GIT_REPO_URL='${env.GIT_REPO}' bash /opt/lm-hospital/devops/deploy.sh"
+
+                                "cd /opt/lm-hospital && GIT_REPO_URL='${env.GIT_REPO}' bash devops/deploy.sh"
                             ]
 
                             CMD_ID = sh(
@@ -226,7 +285,9 @@ pipeline {
         }
 
         stage('Verify Deployment') {
+
             steps {
+
                 withAWS(region: env.AWS_REGION) {
 
                     script {
@@ -250,6 +311,18 @@ pipeline {
 
                                 if (status == 'Failed') {
 
+                                    echo "=== DEPLOY STDOUT ==="
+
+                                    sh """
+                                        aws ssm get-command-invocation \
+                                          --command-id '${CMD_ID}' \
+                                          --instance-id '${INSTANCE_ID}' \
+                                          --query 'StandardOutputContent' \
+                                          --output text
+                                    """
+
+                                    echo "=== DEPLOY STDERR ==="
+
                                     sh """
                                         aws ssm get-command-invocation \
                                           --command-id '${CMD_ID}' \
@@ -258,16 +331,16 @@ pipeline {
                                           --output text
                                     """
 
-                                    error("Deployment failed — see SSM output above")
+                                    error("Deployment failed — see logs above")
                                 }
 
                                 return status == 'Success'
                             }
                         }
 
-                        sh """
-                            echo "=== Deploy output ==="
+                        echo "=== DEPLOY OUTPUT ==="
 
+                        sh """
                             aws ssm get-command-invocation \
                               --command-id '${CMD_ID}' \
                               --instance-id '${INSTANCE_ID}' \
@@ -280,6 +353,7 @@ pipeline {
         }
 
         stage('Health Check') {
+
             steps {
 
                 sh """
@@ -321,6 +395,7 @@ pipeline {
         }
 
         failure {
+
             echo "Pipeline failed — check logs above."
         }
 
@@ -328,12 +403,14 @@ pipeline {
 
             node('') {
 
-                cleanWs(patterns: [
-                    [pattern: 'devops/terraform/terraform.tfstate',       type: 'EXCLUDE'],
-                    [pattern: 'devops/terraform/terraform.tfstate.backup', type: 'EXCLUDE'],
-                    [pattern: 'devops/terraform/.terraform/**',            type: 'EXCLUDE'],
-                    [pattern: 'devops/terraform/.terraform.lock.hcl',      type: 'EXCLUDE']
-                ])
+                cleanWs(
+                    patterns: [
+                        [pattern: 'devops/terraform/terraform.tfstate',        type: 'EXCLUDE'],
+                        [pattern: 'devops/terraform/terraform.tfstate.backup', type: 'EXCLUDE'],
+                        [pattern: 'devops/terraform/.terraform/**',             type: 'EXCLUDE'],
+                        [pattern: 'devops/terraform/.terraform.lock.hcl',       type: 'EXCLUDE']
+                    ]
+                )
             }
         }
     }
