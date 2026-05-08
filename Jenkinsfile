@@ -61,14 +61,14 @@ pipeline {
                 sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
                 sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
 
-                env.INSTANCE_ID = sh(
-                    script: "jq -r '.outputs.ec2_instance_id.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-                    returnStdout: true
-                ).trim()
-                env.EC2_IP = sh(
-                    script: "jq -r '.outputs.ec2_public_ip.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-                    returnStdout: true
-                ).trim()
+              env.INSTANCE_ID = sh(
+    script: '''jq -r '.outputs.ec2_instance_id.value' ''' + "${env.WORKSPACE}/devops/terraform/terraform.tfstate",
+    returnStdout: true
+).trim()
+env.EC2_IP = sh(
+    script: '''jq -r '.outputs.ec2_public_ip.value' ''' + "${env.WORKSPACE}/devops/terraform/terraform.tfstate",
+    returnStdout: true
+).trim()
 
                 echo "EC2 Instance ID : ${env.INSTANCE_ID}"
                 echo "EC2 Public IP   : ${env.EC2_IP}"
