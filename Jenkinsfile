@@ -45,13 +45,8 @@ pipeline {
                 }
             }
             post {
-                    always {
-                             junit(
-                                    testResults: 'backend/target/surefire-reports/*.xml',
-                                    allowEmptyResults: true
-                                    )
-                            }
-                }
+                always { junit 'backend/target/surefire-reports/*.xml' }
+            }
         }
 
         stage('Terraform: Provision EC2') {
@@ -262,7 +257,12 @@ pipeline {
             // Wrapped in node block to ensure workspace context is available
             // even if the pipeline failed before any node was allocated
             node('') {
-                cleanWs()
+                cleanWs(patterns: [
+                    [pattern: 'devops/terraform/terraform.tfstate',        type: 'EXCLUDE'],
+                    [pattern: 'devops/terraform/terraform.tfstate.backup',  type: 'EXCLUDE'],
+                    [pattern: 'devops/terraform/.terraform/**',             type: 'EXCLUDE'],
+                    [pattern: 'devops/terraform/.terraform.lock.hcl',       type: 'EXCLUDE']
+                ])
             }
         }
     }
