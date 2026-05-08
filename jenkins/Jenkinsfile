@@ -4,10 +4,10 @@ pipeline {
     environment {
         APP_NAME    = 'lm-hospital'
         AWS_REGION  = 'us-east-1'
-        BUILD_TAG   = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
         GIT_REPO    = 'https://github.com/laxmismullur/LM-Hospital-Production.git'
         INSTANCE_ID = ''
         EC2_IP      = ''
+        // BUILD_TAG removed from here — set after checkout once GIT_COMMIT is available
     }
 
     options {
@@ -23,6 +23,12 @@ pipeline {
                 git branch: 'main',
                     url: env.GIT_REPO,
                     credentialsId: 'github-credentials'
+                script {
+                    // Safe: GIT_COMMIT is now populated after checkout
+                    def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.BUILD_TAG = "${env.BUILD_NUMBER}-${shortCommit}"
+                    echo "Build tag: ${env.BUILD_TAG}"
+                }
             }
         }
 
@@ -39,8 +45,13 @@ pipeline {
                 }
             }
             post {
-                always { junit 'backend/target/surefire-reports/*.xml' }
-            }
+                    always {
+                             junit(
+                                    testResults: 'backend/target/surefire-reports/*.xml',
+                                    allowEmptyResults: true
+                                    )
+                            }
+                }
         }
 
         stage('Terraform: Provision EC2') {
@@ -237,7 +248,7 @@ pipeline {
     post {
         success {
             echo """
-            ✔ Build ${BUILD_TAG} deployed successfully.
+            ✔ Build ${env.BUILD_TAG} deployed successfully.
             App        : http://${env.EC2_IP}
             Backend    : http://${env.EC2_IP}:8085/actuator/health
             Grafana    : http://${env.EC2_IP}:3001
@@ -248,7 +259,11 @@ pipeline {
             echo "Pipeline failed — check logs above."
         }
         always {
-            cleanWs()
+            // Wrapped in node block to ensure workspace context is available
+            // even if the pipeline failed before any node was allocated
+            node('') {
+                cleanWs()
+            }
         }
     }
 }
