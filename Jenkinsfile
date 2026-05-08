@@ -52,33 +52,34 @@ pipeline {
             }
         }
 
-        stage('Terraform: Provision EC2') {
-            steps {
-                withAWS(region: env.AWS_REGION) {
-                    script {
-                        sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
-                        sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
+       stage('Terraform: Provision EC2') {
+    steps {
+        withAWS(region: env.AWS_REGION) {
+            script {
+                sh "echo 'WORKSPACE is: ${env.WORKSPACE}'"
+                sh "ls ${env.WORKSPACE}/devops/terraform/terraform.tfstate || echo 'STATE FILE NOT FOUND'"
+                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
+                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
 
-                        // Read directly from state file using jq — avoids all shell escaping issues
-                        env.INSTANCE_ID = sh(
-                            script: "jq -r '.outputs.ec2_instance_id.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-                            returnStdout: true
-                        ).trim()
-                        env.EC2_IP = sh(
-                            script: "jq -r '.outputs.ec2_public_ip.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-                            returnStdout: true
-                        ).trim()
+                env.INSTANCE_ID = sh(
+                    script: "jq -r '.outputs.ec2_instance_id.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
+                    returnStdout: true
+                ).trim()
+                env.EC2_IP = sh(
+                    script: "jq -r '.outputs.ec2_public_ip.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
+                    returnStdout: true
+                ).trim()
 
-                        echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                        echo "EC2 Public IP   : ${env.EC2_IP}"
+                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                echo "EC2 Public IP   : ${env.EC2_IP}"
 
-                        if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
-                            error("INSTANCE_ID is empty — check terraform state file")
-                        }
-                    }
+                if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
+                    error("INSTANCE_ID is empty — check terraform state file")
                 }
             }
         }
+    }
+}
 
         stage('Wait for SSM') {
             steps {
