@@ -52,34 +52,31 @@ pipeline {
             }
         }
 
-       stage('Terraform: Provision EC2') {
-    steps {
-        withAWS(region: env.AWS_REGION) {
-            script {
-                sh "echo 'WORKSPACE is: ${env.WORKSPACE}'"
-                sh "ls ${env.WORKSPACE}/devops/terraform/terraform.tfstate || echo 'STATE FILE NOT FOUND'"
-                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
-                sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
+        stage('Terraform: Provision EC2') {
+            steps {
+                withAWS(region: env.AWS_REGION) {
+                    script {
+                        sh """
+                            cd ${env.WORKSPACE}/devops/terraform
+                            terraform init
+                            terraform apply -auto-approve
+                            terraform output -raw ec2_instance_id > /tmp/instance_id.txt
+                            terraform output -raw ec2_public_ip   > /tmp/ec2_ip.txt
+                        """
 
-              env.INSTANCE_ID = sh(
-    script: '''jq -r '.outputs.ec2_instance_id.value' ''' + "${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-    returnStdout: true
-).trim()
-env.EC2_IP = sh(
-    script: '''jq -r '.outputs.ec2_public_ip.value' ''' + "${env.WORKSPACE}/devops/terraform/terraform.tfstate",
-    returnStdout: true
-).trim()
+                        env.INSTANCE_ID = sh(script: 'cat /tmp/instance_id.txt', returnStdout: true).trim()
+                        env.EC2_IP      = sh(script: 'cat /tmp/ec2_ip.txt',      returnStdout: true).trim()
 
-                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                echo "EC2 Public IP   : ${env.EC2_IP}"
+                        echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                        echo "EC2 Public IP   : ${env.EC2_IP}"
 
-                if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
-                    error("INSTANCE_ID is empty — check terraform state file")
+                        if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
+                            error("INSTANCE_ID is empty — terraform output failed")
+                        }
+                    }
                 }
             }
         }
-    }
-}
 
         stage('Wait for SSM') {
             steps {
