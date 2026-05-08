@@ -91,14 +91,14 @@ systemctl reload-or-restart grafana-server
 # 10. Wait for backend to become healthy
 echo "--- Health check ---"
 RETRY=0
-until curl -sf http://localhost:8085/actuator/health | grep -q '"status":"UP"' || [ "$RETRY" -ge 18 ]; do
-    echo "Waiting for backend... attempt $((RETRY + 1))/18"
+until curl -sf http://localhost:8085/actuator/health | grep -q '"status":"UP"' || [ "$RETRY" -ge 36 ]; do
+    echo "Waiting for backend... attempt $((RETRY + 1))/36"
     RETRY=$((RETRY + 1))
     sleep 10
 done
 
-if [ "$RETRY" -ge 18 ]; then
-    echo "ERROR: Backend did not become healthy within 3 minutes"
+if [ "$RETRY" -ge 36 ]; then
+    echo "ERROR: Backend did not become healthy within 6 minutes"
     journalctl -u lm-hospital-backend --no-pager -n 50
     exit 1
 fi
