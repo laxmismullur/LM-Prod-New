@@ -18,6 +18,17 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "=== LM Hospital Deploy: $(date) ==="
 
+# 0. Ensure swap exists (guards against OOM during Maven build + running services)
+if ! swapon --show | grep -q '/swapfile'; then
+    echo "--- Creating 2 GB swap ---"
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+echo "Swap: $(free -h | awk '/^Swap/{print $2}')"
+
 # 1. Load environment
 set -a
 source "$APP_DIR/.env"
@@ -46,9 +57,14 @@ export MYSQL_DATABASE DB_USERNAME DB_PASSWORD
 envsubst < "$APP_DIR/db/schema.sql" | mysql -u root --connect-expired-password
 
 # 4. Build Spring Boot backend
+#    Stop the running backend first so its JVM heap is free during compilation.
+#    Maven gets its own 512 MB cap via MAVEN_OPTS to avoid OOM-killing other services.
+echo "--- Stopping backend before build ---"
+systemctl stop lm-hospital-backend || true
+
 echo "--- Building backend ---"
 cd "$APP_DIR/backend"
-mvn clean package -DskipTests --no-transfer-progress -q
+MAVEN_OPTS="-Xms128m -Xmx512m" mvn clean package -DskipTests --no-transfer-progress -q
 cp target/LMHospital.jar "$APP_DIR/backend/LMHospital.jar"
 
 # 5. Build React frontend
@@ -81,25 +97,35 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
 
-# 9. Restart application services
+# 9. Apply JVM memory limits via systemd drop-in, then restart services
+#    Caps Spring Boot heap so it coexists with MySQL, Prometheus and Grafana.
+echo "--- Applying JVM memory limits ---"
+mkdir -p /etc/systemd/system/lm-hospital-backend.service.d
+printf '[Service]\nExecStart=\nExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /home/ubuntu/lm-hospital/backend/LMHospital.jar\n' \
+    > /etc/systemd/system/lm-hospital-backend.service.d/memory.conf
+
 echo "--- Restarting services ---"
 systemctl daemon-reload
 systemctl restart lm-hospital-backend
 systemctl reload-or-restart prometheus
 systemctl reload-or-restart grafana-server
 
-# 10. Wait for backend to become healthy
+# 10. Wait for backend to become healthy (up to 10 minutes)
 echo "--- Health check ---"
 RETRY=0
-until curl -sf http://localhost:8085/actuator/health | grep -q '"status":"UP"' || [ "$RETRY" -ge 36 ]; do
-    echo "Waiting for backend... attempt $((RETRY + 1))/36"
+MAX_RETRIES=60
+until curl -sf http://localhost:8085/actuator/health | grep -q '"status":"UP"' || [ "$RETRY" -ge "$MAX_RETRIES" ]; do
+    echo "Waiting for backend... attempt $((RETRY + 1))/$MAX_RETRIES"
     RETRY=$((RETRY + 1))
     sleep 10
 done
 
-if [ "$RETRY" -ge 36 ]; then
-    echo "ERROR: Backend did not become healthy within 6 minutes"
-    journalctl -u lm-hospital-backend --no-pager -n 50
+if [ "$RETRY" -ge "$MAX_RETRIES" ]; then
+    echo "ERROR: Backend did not become healthy within 10 minutes"
+    echo "--- Last 80 backend log lines ---"
+    journalctl -u lm-hospital-backend --no-pager -n 80
+    echo "--- Memory at failure ---"
+    free -h
     exit 1
 fi
 

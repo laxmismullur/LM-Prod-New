@@ -141,7 +141,7 @@ User=ubuntu
 Group=ubuntu
 WorkingDirectory=/home/ubuntu/lm-hospital/backend
 EnvironmentFile=/home/ubuntu/lm-hospital/.env
-ExecStart=/usr/bin/java -jar /home/ubuntu/lm-hospital/backend/LMHospital.jar
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /home/ubuntu/lm-hospital/backend/LMHospital.jar
 SuccessExitStatus=143
 Restart=on-failure
 RestartSec=10
@@ -151,6 +151,13 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 SVCEOF
+
+# ── Swap (2 GB) — prevents OOM during Maven builds alongside running services ──
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 # ── Nginx placeholder ──────────────────────────────────────────
 cat > /etc/nginx/sites-available/lm-hospital <<'NGINXEOF'
