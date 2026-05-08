@@ -26,7 +26,6 @@ node -v && npm -v
 # ── MySQL 8.0 ────────────────────────────────────────────────
 apt-get install -y mysql-server
 systemctl enable --now mysql
-# Ensure root can connect without password for bootstrap DB init
 mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';" 2>/dev/null || true
 mysql -e "FLUSH PRIVILEGES;" 2>/dev/null || true
 
@@ -64,7 +63,6 @@ wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
 echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" \
     > /etc/apt/sources.list.d/grafana.list
 apt-get update -y && apt-get install -y grafana
-# Switch from default port 3000 to 3001
 sed -i 's/^;http_port = 3000/http_port = 3001/' /etc/grafana/grafana.ini
 grep -q "^http_port" /etc/grafana/grafana.ini || \
     sed -i '/^\[server\]/a http_port = 3001' /etc/grafana/grafana.ini
@@ -127,7 +125,7 @@ SVCEOF
 mkdir -p /etc/systemd/system/grafana-server.service.d
 cat > /etc/systemd/system/grafana-server.service.d/env.conf <<'SVCEOF'
 [Service]
-EnvironmentFile=-/opt/lm-hospital/.env
+EnvironmentFile=-/home/ubuntu/lm-hospital/.env
 SVCEOF
 
 # ── Systemd: Spring Boot backend ─────────────────────────────
@@ -141,9 +139,9 @@ Requires=mysql.service
 Type=simple
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/opt/lm-hospital/backend
-EnvironmentFile=/opt/lm-hospital/.env
-ExecStart=/usr/bin/java -jar /opt/lm-hospital/backend/LMHospital.jar
+WorkingDirectory=/home/ubuntu/lm-hospital/backend
+EnvironmentFile=/home/ubuntu/lm-hospital/.env
+ExecStart=/usr/bin/java -jar /home/ubuntu/lm-hospital/backend/LMHospital.jar
 SuccessExitStatus=143
 Restart=on-failure
 RestartSec=10
@@ -154,7 +152,7 @@ StandardError=journal
 WantedBy=multi-user.target
 SVCEOF
 
-# ── Nginx placeholder (real config deployed by Jenkins/deploy.sh) ──
+# ── Nginx placeholder ──────────────────────────────────────────
 cat > /etc/nginx/sites-available/lm-hospital <<'NGINXEOF'
 server {
     listen 80 default_server;
@@ -174,9 +172,9 @@ mkdir -p /var/www/lm-hospital
 chown www-data:www-data /var/www/lm-hospital
 
 # ── App directories ───────────────────────────────────────────
-mkdir -p /opt/${app_name}/backend
-mkdir -p /var/log/${app_name}
-chown -R ubuntu:ubuntu /opt/${app_name} /var/log/${app_name}
+mkdir -p /home/ubuntu/lm-hospital/backend
+mkdir -p /var/log/lm-hospital
+chown -R ubuntu:ubuntu /home/ubuntu/lm-hospital /var/log/lm-hospital
 
 # ── Enable & start services ───────────────────────────────────
 systemctl daemon-reload

@@ -1,21 +1,21 @@
 #!/bin/bash
 # LM Hospital native deployment script
-# Runs on EC2 via AWS SSM after Jenkins writes /opt/lm-hospital/.env
-# Pre-requisites: bootstrap.tpl (or bootstrap-user-script.sh) already executed
+# Runs on EC2 via AWS SSM after Jenkins writes /home/ubuntu/lm-hospital/.env
+# Pre-requisites: bootstrap.tpl already executed
 set -euo pipefail
 
-APP_DIR=/opt/lm-hospital
+APP_DIR=/home/ubuntu/lm-hospital
 FRONTEND_DIST=/var/www/lm-hospital
 LOG_FILE=/var/log/lm-hospital/deploy.log
 GIT_REPO="${GIT_REPO_URL:-https://github.com/laxmismullur/LM-Hospital-Production.git}"
 
 mkdir -p /var/log/lm-hospital
 exec > >(tee -a "$LOG_FILE") 2>&1
+
 echo "=== LM Hospital Deploy: $(date) ==="
 
-# 1. Load environment (written by Jenkins before this script runs)
+# 1. Load environment
 set -a
-# shellcheck source=/dev/null
 source "$APP_DIR/.env"
 set +a
 
@@ -31,8 +31,7 @@ else
     cd "$APP_DIR"
 fi
 
-# Reload .env after git reset (Jenkins writes it before calling this script,
-# but reset --hard would overwrite a committed .env — Jenkins rewrites it)
+# Reload .env after git reset
 set -a
 source "$APP_DIR/.env"
 set +a
@@ -53,7 +52,6 @@ echo "--- Building frontend ---"
 cd "$APP_DIR/frontend"
 npm ci --prefer-offline --silent
 npm run build
-
 mkdir -p "$FRONTEND_DIST"
 rm -rf "${FRONTEND_DIST:?}"/*
 cp -r dist/* "$FRONTEND_DIST/"
@@ -106,5 +104,5 @@ PUBLIC_IP=$(curl -sf --max-time 3 http://169.254.169.254/latest/meta-data/public
 echo "=== Deploy complete: $(date) ==="
 echo "  App        : http://$PUBLIC_IP"
 echo "  Backend    : http://$PUBLIC_IP:8085/actuator/health"
-echo "  Grafana    : http://$PUBLIC_IP:3001  (admin: GF_SECURITY_ADMIN_USER from .env)"
+echo "  Grafana    : http://$PUBLIC_IP:3001"
 echo "  Prometheus : http://$PUBLIC_IP:9090"
