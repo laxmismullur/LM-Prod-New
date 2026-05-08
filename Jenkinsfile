@@ -7,7 +7,6 @@ pipeline {
         GIT_REPO    = 'https://github.com/laxmismullur/LM-Hospital-Production.git'
         INSTANCE_ID = ''
         EC2_IP      = ''
-        // BUILD_TAG removed from here — set after checkout once GIT_COMMIT is available
     }
 
     options {
@@ -60,12 +59,13 @@ pipeline {
                         sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
                         sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
 
+                        // Read directly from state file using jq — avoids all shell escaping issues
                         env.INSTANCE_ID = sh(
-                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_instance_id | grep -oP '[a-z0-9-]+'",
+                            script: "jq -r '.outputs.ec2_instance_id.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
                             returnStdout: true
                         ).trim()
                         env.EC2_IP = sh(
-                            script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -json ec2_public_ip | grep -oP '[0-9.]+'",
+                            script: "jq -r '.outputs.ec2_public_ip.value' ${env.WORKSPACE}/devops/terraform/terraform.tfstate",
                             returnStdout: true
                         ).trim()
 
@@ -73,7 +73,7 @@ pipeline {
                         echo "EC2 Public IP   : ${env.EC2_IP}"
 
                         if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
-                            error("INSTANCE_ID is empty — terraform output failed")
+                            error("INSTANCE_ID is empty — check terraform state file")
                         }
                     }
                 }
