@@ -9,13 +9,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-
-  # Remote state (optional — configure your S3 bucket)
-  # backend "s3" {
-  #   bucket = "lm-hospital-terraform-state"
-  #   key    = "prod/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
 }
 
 provider "aws" {
@@ -39,20 +32,52 @@ resource "aws_security_group" "lm_sg" {
   description = "LM Hospital security group"
   vpc_id      = data.aws_vpc.default.id
 
-  # HTTP  — React frontend via Nginx
-  ingress { from_port = 80   to_port = 80   protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  # HTTPS
-  ingress { from_port = 443  to_port = 443  protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  # Spring Boot backend
-  ingress { from_port = 8085 to_port = 8085 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  # Prometheus
-  ingress { from_port = 9090 to_port = 9090 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
-  # Grafana
-  ingress { from_port = 3001 to_port = 3001 protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-  egress { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-  tags = { Name = "${var.app_name}-sg", Project = "LMHospital" }
+  ingress {
+    from_port   = 8085
+    to_port     = 8085
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name    = "${var.app_name}-sg"
+    Project = "LMHospital"
+  }
 }
 
 # ── IAM Role for SSM ──────────────────────────────────────────
