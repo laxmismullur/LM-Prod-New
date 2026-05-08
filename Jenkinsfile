@@ -184,14 +184,14 @@ pipeline {
 
                             echo "Secrets written to EC2 successfully."
 
-                            // Clone as root, chown to ubuntu, restore .env, then deploy
+                            // HOME must be set in each SSM command — SSM doesn't inherit environment
                             def deployCommands = [
-                                "rm -rf /home/ubuntu/lm-hospital && git clone ${env.GIT_REPO} /home/ubuntu/lm-hospital",
+                                "export HOME=/root && rm -rf /home/ubuntu/lm-hospital && git clone ${env.GIT_REPO} /home/ubuntu/lm-hospital",
                                 "chown -R ubuntu:ubuntu /home/ubuntu/lm-hospital",
                                 "echo '${envB64}' | base64 -d > /home/ubuntu/lm-hospital/.env",
                                 "chmod 600 /home/ubuntu/lm-hospital/.env && chown ubuntu:ubuntu /home/ubuntu/lm-hospital/.env",
                                 "chmod +x /home/ubuntu/lm-hospital/devops/deploy.sh",
-                                "cd /home/ubuntu/lm-hospital && GIT_REPO_URL=${env.GIT_REPO} bash devops/deploy.sh"
+                                "export HOME=/root && cd /home/ubuntu/lm-hospital && GIT_REPO_URL=${env.GIT_REPO} bash devops/deploy.sh"
                             ]
 
                             CMD_ID = sh(
