@@ -15,7 +15,11 @@ public class LMCorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // frontend URL
+        config.setAllowedOriginPatterns(List.of(
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "http://*"  // allows any HTTP origin in production
+));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 

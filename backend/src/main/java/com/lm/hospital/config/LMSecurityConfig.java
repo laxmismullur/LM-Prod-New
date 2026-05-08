@@ -60,9 +60,10 @@ public class LMSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "http://*"  // allows any HTTP origin in production
+));
 
         config.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
