@@ -28,7 +28,7 @@ export function LMAuthProvider({ children }) {
   // =========================
   const login = async (username, password) => {
     const res = await axios.post(
-      'http://localhost:8085/api/lm/auth/login',
+      '/api/lm/auth/login',
       { username, password }
     );
 
@@ -43,7 +43,7 @@ export function LMAuthProvider({ children }) {
     // attach token globally
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    const meRes = await axios.get('http://localhost:8085/api/lm/auth/me');
+    const meRes = await axios.get('/api/lm/auth/me');
     const currentUser = {
       ...userData,
       ...meRes.data,
