@@ -60,21 +60,22 @@ pipeline {
             script {
                 sh "terraform -chdir=${env.WORKSPACE}/devops/terraform init"
                 sh "terraform -chdir=${env.WORKSPACE}/devops/terraform apply -auto-approve"
-                
+
                 env.INSTANCE_ID = sh(
-                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_instance_id",
+                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_instance_id 2>/dev/null",
                     returnStdout: true
                 ).trim()
                 env.EC2_IP = sh(
-                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_public_ip",
+                    script: "terraform -chdir=${env.WORKSPACE}/devops/terraform output -raw ec2_public_ip 2>/dev/null",
                     returnStdout: true
                 ).trim()
+
+                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
+                echo "EC2 Public IP   : ${env.EC2_IP}"
 
                 if (!env.INSTANCE_ID?.trim() || env.INSTANCE_ID == 'null') {
                     error("INSTANCE_ID is empty — terraform output failed")
                 }
-                echo "EC2 Instance ID : ${env.INSTANCE_ID}"
-                echo "EC2 Public IP   : ${env.EC2_IP}"
             }
         }
     }
