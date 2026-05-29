@@ -9,7 +9,7 @@ pipeline {
     environment {
         APP_NAME   = 'lm-hospital'
         AWS_REGION = 'us-east-1'
-        GIT_REPO   = 'https://github.com/laxmismullur/LM-Hospital-Production.git'
+        GIT_REPO   = 'https://github.com/laxmismullur/LM-Prod-New.git'
     }
 
     options {
